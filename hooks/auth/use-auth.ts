@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { supabase } from "@/lib/supabase";
 
-export function useAuth() {
+export function useAuthListener() {
   const { setSession, setIsLoading } = useAuthStore();
   useEffect(() => {
     const loadSession = async () => {

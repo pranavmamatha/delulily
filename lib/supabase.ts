@@ -6,7 +6,10 @@ const ExpoSecureStore = {
     return getItemAsync(key);
   },
   setItem: (key: string, value: string) => {
-    return setItemAsync(key, value);
+    if (value.length > 2048) {
+      console.warn('Value being stored in SecureStore is larger than 2048 bytes and it may not be stored successfully. In a future SDK version, this call may throw an error.')
+    }
+    return setItemAsync(key, value)
   },
   removeItem: (key: string) => {
     return deleteItemAsync(key);
@@ -19,6 +22,9 @@ export const supabase = createClient(
   {
     auth: {
       storage: ExpoSecureStore,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
     }
   }
 )
