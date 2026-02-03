@@ -1,5 +1,7 @@
 import { Tabs } from "expo-router"
+import { useProfile } from "@/hooks/profile/use-profile";
 const _layout = () => {
+  useProfile();
   return (
     <Tabs>
       <Tabs.Screen name="index" options={{ headerShown: false }} />
