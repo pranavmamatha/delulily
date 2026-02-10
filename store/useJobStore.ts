@@ -18,7 +18,7 @@ export const useJobStore = create<Jobs>((set) => ({
   jobs: [],
   insertJobs: (job) => {
     set((state) => ({
-      jobs: { ...state.jobs, job }
+      jobs: [...state.jobs, job]
     }))
   },
   setJobStatus: (jobId, jobStatus) => {
