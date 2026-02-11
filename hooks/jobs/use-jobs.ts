@@ -11,8 +11,10 @@ export function useJobs() {
       if (error) {
         console.debug("Error fetching user jobs:", error)
       }
-      data?.map((j) => {
-        const job = { createdAt: j.created_at, jobId: j.id, templateId: j.template_id, jobStatus: j.status }
+      data?.map(async (j) => {
+        const url = `${j.user_id}/${j.id}/input.png`
+        const { data } = await supabase.storage.from("jobs").createSignedUrl(url, 120);
+        const job = { createdAt: j.created_at, jobId: j.id, templateId: j.template_id, jobStatus: j.status, generatedImageUrl: data?.signedUrl || null }
         insertJobs(job)
       })
     })();
