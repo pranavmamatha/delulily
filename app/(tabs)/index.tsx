@@ -14,3 +14,4 @@ export default function SignOutButton() {
   return (<View className='flex flex-1 justify-center items-center'>
     <Button title="Sign out" onPress={onSignOutButtonPress} />
   </View>)
+}
