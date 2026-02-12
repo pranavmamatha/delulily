@@ -127,7 +127,3 @@ delulily/
 
    - Scan the QR code with [Expo Go](https://expo.dev/go) on your phone
    - Or press `i` for iOS Simulator / `a` for Android Emulator
-
-## 📝 License
-
-This project is private and not currently licensed for public distribution.
