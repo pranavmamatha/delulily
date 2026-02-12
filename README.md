@@ -1,4 +1,5 @@
 # 🌸 Delulily
+[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/pranavmamatha/delulily/releases/download/latest/delulily.apk)
 
 An AI-powered image transformation app built with React Native and Expo. Upload a photo, choose a creative template, and let the AI generate a stylized version of your image.
 
@@ -64,13 +65,25 @@ delulily/
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### 📥 Download the App
+
+**Android users** can try Delulily right away — no build needed!
+
+[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/pranavmamatha/delulily/releases/download/latest/delulily.apk)
+
+> **Note:** You may need to enable *Install from unknown sources* in your Android settings to sideload the APK.
+
+---
+
+### 🛠 Build from Source
+
+#### Prerequisites
 
 - [Bun](https://bun.sh) (JavaScript runtime)
 - [Expo CLI](https://docs.expo.dev/get-started/installation/) (`bun install -g expo-cli`)
 - A [Supabase](https://supabase.com) project with Auth, Storage, and Edge Functions configured
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
 
