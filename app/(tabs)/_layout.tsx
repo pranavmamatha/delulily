@@ -1,7 +1,6 @@
 import { useProfile } from "@/hooks/profile/use-profile";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { SymbolView } from "expo-symbols";
-import { View } from "react-native";
 
 export default function TabLayout() {
   useProfile();
@@ -27,12 +26,7 @@ export default function TabLayout() {
           title: "Home",
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <SymbolView
-              name="house.fill"
-              size={24}
-              tintColor={color}
-              fallback={<View style={{ width: 24, height: 24, backgroundColor: color, borderRadius: 12 }} />}
-            />
+            <Ionicons name="home" size={24} color={color} />
           )
         }}
       />
@@ -42,12 +36,7 @@ export default function TabLayout() {
           title: "Profile",
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <SymbolView
-              name="person.fill"
-              size={24}
-              tintColor={color}
-              fallback={<View style={{ width: 24, height: 24, backgroundColor: color, borderRadius: 12 }} />}
-            />
+            <Ionicons name="person" size={24} color={color} />
           )
         }}
       />

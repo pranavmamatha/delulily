@@ -2,8 +2,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useJobStore } from "@/store/useJobStore";
 import { useProfileStore } from "@/store/useProfileStore";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { SymbolView } from "expo-symbols";
 import { cssInterop } from "nativewind";
 import { Alert, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -62,11 +62,10 @@ export default function ProfileHeader() {
                         onPress={handleLogout}
                         className="bg-white/10 rounded-full p-3 active:bg-white/20 border border-white/20"
                     >
-                        <SymbolView
-                            name="rectangle.portrait.and.arrow.right"
+                        <Ionicons
+                            name="log-out-outline"
                             size={20}
-                            tintColor="#fff"
-                            type="hierarchical"
+                            color="#fff"
                         />
                     </Pressable>
                 </View>

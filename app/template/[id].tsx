@@ -1,11 +1,11 @@
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useTemplateStore } from "@/store/useTemplateStore";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { SymbolView } from "expo-symbols";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -162,7 +162,7 @@ export default function TemplateDetails() {
                             disabled={isCreatingJob}
                             className="bg-black/40 w-10 h-10 rounded-full items-center justify-center border border-white/15 active:bg-white/20"
                         >
-                            <SymbolView name="arrow.left" size={18} tintColor="#fff" />
+                            <Ionicons name="arrow-back" size={18} color="#fff" />
                         </Pressable>
                         <View className="bg-black/40 px-4 py-2 rounded-full border border-white/15">
                             <Text className="text-white text-sm font-semibold" numberOfLines={1}>
@@ -211,7 +211,7 @@ export default function TemplateDetails() {
                                 </>
                             ) : (
                                 <>
-                                    <SymbolView name="sparkles" size={20} tintColor="#000" />
+                                    <Ionicons name="sparkles" size={20} color="#000" />
                                     <Text className="text-black font-bold text-base">Generate</Text>
                                 </>
                             )}
@@ -221,7 +221,7 @@ export default function TemplateDetails() {
                             onPress={handlePickImage}
                             className="bg-white rounded-full py-4 items-center justify-center flex-row gap-2 active:opacity-80"
                         >
-                            <SymbolView name="photo.badge.plus" size={20} tintColor="#000" />
+                            <Ionicons name="image-outline" size={20} color="#000" />
                             <Text className="text-black font-bold text-base">Choose Photo</Text>
                         </Pressable>
                     )}

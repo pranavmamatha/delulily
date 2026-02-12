@@ -8,7 +8,7 @@ export function useTemplates() {
   const store = useTemplateStore;
   const isFetchingRef = useRef(false);
 
-  const fetchTemplates = useCallback(async (pageToFetch: number) => {
+  const fetchTemplates = useCallback(async (pageToFetch: number, search?: string) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
 
@@ -20,11 +20,18 @@ export function useTemplates() {
       const start = pageToFetch * PAGE_SIZE;
       const end = start + PAGE_SIZE - 1;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("templates")
         .select("*")
         .order("created_at", { ascending: false })
         .range(start, end);
+
+      // Apply search filter if provided
+      if (search && search.trim().length > 0) {
+        query = query.ilike("name", `%${search.trim()}%`);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching templates:", error);
@@ -34,6 +41,9 @@ export function useTemplates() {
       }
 
       if (!data || data.length === 0) {
+        if (pageToFetch === 0) {
+          setTemplates([]);
+        }
         setHasMore(false);
         setIsLoading(false);
         isFetchingRef.current = false;
@@ -42,7 +52,6 @@ export function useTemplates() {
 
       setHasMore(data.length >= PAGE_SIZE);
 
-      // Build templates without preview URLs first
       const skeletonTemplates: TemplateType[] = data.map((t) => ({
         id: t.id,
         name: t.name ?? "Untitled",
@@ -70,7 +79,6 @@ export function useTemplates() {
         return;
       }
 
-      // Update each template with its preview URL
       if (urlData) {
         const { templates: currentTemplates } = store.getState();
         const updated = currentTemplates.map((t) => {
@@ -92,9 +100,9 @@ export function useTemplates() {
   }, []);
 
   const loadMore = useCallback(() => {
-    const { hasMore, isLoading, page } = store.getState();
+    const { hasMore, isLoading, page, searchQuery } = store.getState();
     if (!hasMore || isLoading) return;
-    fetchTemplates(page + 1);
+    fetchTemplates(page + 1, searchQuery);
   }, [fetchTemplates]);
 
   const refresh = useCallback(() => {
@@ -103,7 +111,31 @@ export function useTemplates() {
     s.setPage(0);
     s.setHasMore(true);
     s.setIsLoading(true);
-    fetchTemplates(0);
+    fetchTemplates(0, s.searchQuery);
+  }, [fetchTemplates]);
+
+  const pullToRefresh = useCallback(async () => {
+    const s = store.getState();
+    s.setIsRefreshing(true);
+    s.setSearchQuery("");
+    s.setTemplates([]);
+    s.setPage(0);
+    s.setHasMore(true);
+    // Force reset fetching ref so it can proceed
+    isFetchingRef.current = false;
+    await fetchTemplates(0, "");
+    store.getState().setIsRefreshing(false);
+  }, [fetchTemplates]);
+
+  const search = useCallback((query: string) => {
+    const s = store.getState();
+    s.setSearchQuery(query);
+    s.setTemplates([]);
+    s.setPage(0);
+    s.setHasMore(true);
+    // Force reset fetching ref
+    isFetchingRef.current = false;
+    fetchTemplates(0, query);
   }, [fetchTemplates]);
 
   useEffect(() => {
@@ -111,7 +143,8 @@ export function useTemplates() {
   }, [refresh]);
 
   const isLoading = useTemplateStore((s) => s.isLoading);
+  const isRefreshing = useTemplateStore((s) => s.isRefreshing);
   const hasMore = useTemplateStore((s) => s.hasMore);
 
-  return { loadMore, refresh, isLoading, hasMore };
+  return { loadMore, refresh, pullToRefresh, search, isLoading, isRefreshing, hasMore };
 }

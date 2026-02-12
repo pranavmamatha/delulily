@@ -1,10 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { useJobStore } from "@/store/useJobStore";
-import * as FileSystem from 'expo-file-system';
+import { Ionicons } from "@expo/vector-icons";
+import { File as ExpoFile, Paths } from "expo-file-system";
 import { Image } from "expo-image";
-import * as MediaLibrary from 'expo-media-library';
+import * as MediaLibrary from "expo-media-library";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { SymbolView } from "expo-symbols";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,7 +15,7 @@ function ImageWithLoader({
     onPress,
     className,
     aspectRatioClass = "aspect-[3/4]",
-    showExpandIcon = false
+    showExpandIcon = false,
 }: {
     source: string | null | undefined;
     onPress?: () => void;
@@ -35,7 +35,7 @@ function ImageWithLoader({
         >
             <Image
                 source={source}
-                className={`w-full ${aspectRatioClass} bg-white/5 ${!isLoaded ? 'opacity-0' : 'opacity-100'}`}
+                className={`w-full ${aspectRatioClass} bg-white/5 ${!isLoaded ? "opacity-0" : "opacity-100"}`}
                 contentFit="cover"
                 onLoad={() => setIsLoaded(true)}
                 transition={300}
@@ -48,7 +48,7 @@ function ImageWithLoader({
 
             {isLoaded && showExpandIcon && (
                 <View className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 flex-row items-center gap-1">
-                    <SymbolView name="arrow.up.left.and.arrow.down.right" size={12} tintColor="#fff" />
+                    <Ionicons name="expand-outline" size={12} color="#fff" />
                     <Text className="text-white text-xs font-medium">Expand</Text>
                 </View>
             )}
@@ -63,54 +63,50 @@ export default function JobDetails() {
     const { jobs } = useJobStore();
     const job = jobs.find((j) => j.jobId === id);
 
-    const [templateUrl, setTemplateUrl] = useState<string | null>(null);
+    const [templatePreviewUrl, setTemplatePreviewUrl] = useState<string | null>(null);
     const [viewerImage, setViewerImage] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
-    const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+    const [permissionResponse, requestPermission] = MediaLibrary.usePermissions({
+        granularPermissions: ['photo'],
+    });
 
+    // Fetch template preview from storage bucket
     useEffect(() => {
         let isMounted = true;
-        const fetchTemplate = async () => {
+        const fetchTemplatePreview = async () => {
             if (!job?.templateId) return;
             try {
-                const { data, error } = await supabase
-                    .from('templates')
-                    .select('image_url')
-                    .eq('id', job.templateId)
-                    .single();
+                const path = `${job.templateId}/preview.png`;
+                const { data, error } = await supabase.storage
+                    .from("templates")
+                    .createSignedUrl(path, 3600);
 
-                if (isMounted) {
-                    if (data) {
-                        setTemplateUrl(data.image_url);
-                    } else if (error) {
-                        const { data: allData } = await supabase
-                            .from('templates')
-                            .select('*')
-                            .eq('id', job.templateId)
-                            .single();
-                        if (allData && isMounted) {
-                            setTemplateUrl(allData.image_url || allData.url || allData.preview_url || null);
-                        }
-                    }
+                if (isMounted && data?.signedUrl) {
+                    setTemplatePreviewUrl(data.signedUrl);
+                }
+                if (error) {
+                    console.error("Error fetching template preview:", error);
                 }
             } catch (e) {
-                console.error("Error fetching template:", e);
+                console.error("Error fetching template preview:", e);
             }
         };
 
         if (job?.templateId) {
-            fetchTemplate();
+            fetchTemplatePreview();
         }
 
-        return () => { isMounted = false; };
+        return () => {
+            isMounted = false;
+        };
     }, [job?.templateId]);
 
     const handleDownload = async () => {
         if (!viewerImage) return;
 
-        if (permissionResponse?.status !== 'granted') {
+        if (permissionResponse?.status !== "granted") {
             const { status } = await requestPermission();
-            if (status !== 'granted') {
+            if (status !== "granted") {
                 Alert.alert("Permission required", "Please allow access to your photos to download images.");
                 return;
             }
@@ -118,27 +114,32 @@ export default function JobDetails() {
 
         setSaving(true);
         try {
-            // @ts-ignore
-            // eslint-disable-next-line import/namespace
-            const folder = FileSystem.documentDirectory || FileSystem.cacheDirectory;
-            const fileUri = folder + `delulily_${Date.now()}.jpg`;
+            // Download file directly to cache
+            const fileName = `delulily_${Date.now()}.jpg`;
+            const file = new ExpoFile(Paths.cache, fileName);
 
-            const downloadResumable = FileSystem.createDownloadResumable(
-                viewerImage,
-                fileUri,
-                {},
-            );
+            await ExpoFile.downloadFileAsync(viewerImage, file);
 
-            const result = await downloadResumable.downloadAsync();
-            if (result && result.uri) {
-                await MediaLibrary.saveToLibraryAsync(result.uri);
-                Alert.alert("Saved!", "Image saved to your gallery.");
+            // Save to media library
+            const asset = await MediaLibrary.createAssetAsync(file.uri);
+            const album = await MediaLibrary.getAlbumAsync("delulily");
+            if (album == null) {
+                await MediaLibrary.createAlbumAsync("delulily", asset, false);
+            } else {
+                await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
             }
+            Alert.alert("Saved!", "Image saved to 'delulily' album.");
         } catch (e) {
-            console.error(e);
+            console.error("Download error:", e);
             Alert.alert("Error", "Failed to save image.");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleTemplatePress = () => {
+        if (job?.templateId) {
+            router.push(`/template/${job.templateId}`);
         }
     };
 
@@ -164,7 +165,7 @@ export default function JobDetails() {
                         onPress={() => router.back()}
                         className="bg-white/10 w-10 h-10 rounded-full items-center justify-center border border-white/10 active:bg-white/20"
                     >
-                        <SymbolView name="arrow.left" size={20} tintColor="#fff" />
+                        <Ionicons name="arrow-back" size={20} color="#fff" />
                     </Pressable>
                     <Text className="text-white text-lg font-bold">Details</Text>
                     <View className="w-10" />
@@ -199,22 +200,30 @@ export default function JobDetails() {
                             </View>
                         </View>
 
-                        {/* Template Reference */}
+                        {/* Template Reference — tappable, navigates to template page */}
                         <View className="flex-1">
-                            <View className="bg-white/5 p-3 rounded-2xl border border-white/10 items-center gap-3">
-                                {templateUrl ? (
+                            <Pressable
+                                onPress={handleTemplatePress}
+                                disabled={!job.templateId}
+                                className="bg-white/5 p-3 rounded-2xl border border-white/10 items-center gap-3 active:bg-white/10"
+                            >
+                                {templatePreviewUrl ? (
                                     <Image
-                                        source={templateUrl}
+                                        source={templatePreviewUrl}
                                         className="w-full aspect-square rounded-xl bg-white/5"
                                         contentFit="cover"
+                                        transition={300}
                                     />
                                 ) : (
                                     <View className="w-full aspect-square rounded-xl bg-white/5 items-center justify-center">
-                                        <SymbolView name="photo" size={24} tintColor="#ffffff40" />
+                                        <ActivityIndicator color="rgba(255,255,255,0.3)" />
                                     </View>
                                 )}
-                                <Text className="text-white/80 text-xs font-semibold">Template</Text>
-                            </View>
+                                <View className="flex-row items-center gap-1">
+                                    <Text className="text-white/80 text-xs font-semibold">Template</Text>
+                                    <Ionicons name="arrow-forward" size={10} color="rgba(255,255,255,0.5)" />
+                                </View>
+                            </Pressable>
                         </View>
                     </View>
                 </View>
@@ -229,11 +238,11 @@ export default function JobDetails() {
                             onPress={() => setViewerImage(null)}
                             className="bg-black/40 w-10 h-10 rounded-full items-center justify-center"
                         >
-                            <SymbolView name="xmark" size={20} tintColor="#fff" />
+                            <Ionicons name="close" size={20} color="#fff" />
                         </Pressable>
                     </View>
 
-                    {/* Full Screen Image - Standard Image since viewing library might be complex */}
+                    {/* Full Screen Image */}
                     {viewerImage && (
                         <Image
                             source={viewerImage}
@@ -247,14 +256,14 @@ export default function JobDetails() {
                         <Pressable
                             onPress={handleDownload}
                             disabled={saving}
-                            className={`nav-button overflow-hidden rounded-full py-4 items-center justify-center flex-row gap-2 ${saving ? 'opacity-70' : ''}`}
-                            style={{ backgroundColor: 'white' }}
+                            className={`overflow-hidden rounded-full py-4 items-center justify-center flex-row gap-2 ${saving ? "opacity-70" : ""}`}
+                            style={{ backgroundColor: "white" }}
                         >
                             {saving ? (
                                 <ActivityIndicator color="black" />
                             ) : (
                                 <>
-                                    <SymbolView name="arrow.down.to.line" size={18} tintColor="#000" />
+                                    <Ionicons name="download-outline" size={18} color="#000" />
                                     <Text className="text-black font-bold text-base">Download Image</Text>
                                 </>
                             )}
