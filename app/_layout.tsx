@@ -5,11 +5,13 @@ import "../global.css";
 
 export default function RootLayout() {
   useAuthListener();
-  const {isLoggedIn} = useAuthStore();
-return (
+  const { isLoggedIn } = useAuthStore();
+  return (
     <Stack>
       <Stack.Protected guard={isLoggedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="job/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="template/[id]" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Protected guard={!isLoggedIn}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
